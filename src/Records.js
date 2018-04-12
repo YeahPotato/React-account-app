@@ -4,6 +4,7 @@ import axios from 'axios';
 // import components
 import Record from './components/Record';
 import RecordForm from './components/RecordForm';
+import RecordTop from './components/RecordTop';
 
 class Records extends Component {
 	constructor() {
@@ -11,7 +12,12 @@ class Records extends Component {
 		this.state = {
 			records: [],
 			error: null,
-			isLoaded: false
+			isLoaded: false,
+			price: {
+				Total: 0,
+				In: 0,
+				Out: 0
+			}
 		};
 	}
 
@@ -19,17 +25,22 @@ class Records extends Component {
 		// get all records
 		axios.get('https://5acdab9523cb4e00148b833d.mockapi.io/api/v1/records').then(({ data }) => {
 			this.setState({
-				records: data,
+				records: data.reverse(),
 				error: null,
 				isLoaded: true
 			});
+
+			// computed price
+			this.computedPrice();
 		}).catch(error => {
 			this.setState({
 				error,
 				isLoaded: true
 			})
 		});
+
 	}
+
 
 	// update records
 	handlerUpdateRecords(record) {
@@ -39,6 +50,8 @@ class Records extends Component {
 				record
 			]
 		})
+		// computed price
+		this.computedPrice();
 	}
 
 	// delete update
@@ -46,7 +59,7 @@ class Records extends Component {
 		let temp = this.state.records;
 		for (let i = 0; i < temp.length; i++) {
 			if (temp[i].id === id) {
-				temp.splice(i,1);
+				temp.splice(i, 1);
 				break;
 			}
 		}
@@ -54,7 +67,45 @@ class Records extends Component {
 		this.setState({
 			records: temp
 		})
+		// computed price
+		this.computedPrice();
 	}
+
+	// modify
+	handlerUpdateOne(id, record) {
+		let temp = [];
+		this.state.records.forEach((val, index) => {
+			if (val.id === id) {
+				temp.push(record);
+			} else {
+				temp.push(val);
+			}
+		});
+		this.setState({ records: temp });
+		// computed price
+		this.computedPrice();
+	}
+
+	computedPrice() {
+		let Total = 0, In = 0, Out = 0;
+
+		this.state.records.forEach((val, index) => {
+			if (val.amount < 0) {
+				Out += Number(val.amount);
+			} else {
+				In += Number(val.amount);
+			}
+
+			Total += Number(val.amount);
+		});
+
+		this.setState({
+			price: {
+				Total, In, Out
+			}
+		});
+	}
+
 	render() {
 		const { records, error, isLoaded } = this.state;
 		let tableComponent;
@@ -75,15 +126,19 @@ class Records extends Component {
 						</tr>
 					</thead>
 					<tbody>
-						{records.map((record) => <Record key={record.id} DeleteUpdate={this.handlerDeleteUpdate.bind(this)} record={record} />)}
+						{records.map(
+							(record) =>
+								<Record key={record.id} DeleteUpdate={this.handlerDeleteUpdate.bind(this)} UpdateOneRecord={this.handlerUpdateOne.bind(this)} record={record} />
+						)}
 					</tbody>
 				</table>
 			);
 		}
 
 		return (
-			<div className="react-account-app">
+			<div className="react-account-app container">
 				<h2>Records</h2>
+				<RecordTop price={this.state.price} />
 				<RecordForm UpdateRecords={this.handlerUpdateRecords.bind(this)} />
 				{tableComponent}
 			</div>

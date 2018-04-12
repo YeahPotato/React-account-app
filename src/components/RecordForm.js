@@ -8,7 +8,7 @@ export default class RecordForm extends Component {
         this.state = {
             date: "",
             describe: "",
-            amount: "",
+            amount: 0,
         }
     }
 
@@ -20,6 +20,7 @@ export default class RecordForm extends Component {
 
     // add record
     handlerSubmit(event) {
+        this.setState({amount:+this.state.amount});
         axios.post('https://5acdab9523cb4e00148b833d.mockapi.io/api/v1/records', this.state).then(res => {
             // update records
             this.props.UpdateRecords(res.data);
@@ -46,7 +47,7 @@ export default class RecordForm extends Component {
 
         return (
             <form className="form-inline mb-4 mt-4" onSubmit={this.handlerSubmit.bind(this)}>
-                <div className="form-group ml-2">
+                <div className="form-group">
                     <input className="form-control" onChange={this.handlerChange.bind(this)} type="text" value={date} placeholder="Date" name="date" />
                 </div>
                 <div className="form-group ml-2">
